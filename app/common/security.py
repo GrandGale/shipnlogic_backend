@@ -1,6 +1,5 @@
 """This module contains the security functions for the application."""
 
-from jose import jwt
 from passlib.context import CryptContext
 
 from app.config.settings import get_settings
@@ -34,17 +33,3 @@ def verify_password(plain_password: str, hashed_password: str):
     """
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     return pwd_context.verify(plain_password, hashed_password)
-
-
-def create_access_token(data: dict):
-    """This function creates a JWT token
-
-    Args:
-        data (dict): The data to be encoded
-
-    Returns:
-        str: The JWT token
-    """
-    return jwt.encode(
-        claims=data, key=settings.SECRET_KEY, algorithm=settings.HASHING_ALGORITHM
-    )

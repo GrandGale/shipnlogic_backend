@@ -2,13 +2,19 @@
 
 from contextlib import asynccontextmanager
 from anyio import to_thread
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import ORJSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
+from app.config.handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+    uncaptured_exception_handler,
+)
 from app.common.dependencies import get_db
-from app.example_module.apis import router as example_router
+from app.user.apis import router as user_router
 
 
 # Lifespan (startup, shutdown)
@@ -54,6 +60,12 @@ app.add_middleware(
 )
 
 
+# Exception Handlers
+app.add_exception_handler(Exception, uncaptured_exception_handler)
+app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
+app.add_exception_handler(HTTPException, http_exception_handler)
+
+
 # Health Check
 @app.get("/health", status_code=200, include_in_schema=False)
 async def health_check(_=Depends(get_db)):
@@ -62,4 +74,4 @@ async def health_check(_=Depends(get_db)):
 
 
 # Routers
-app.include_router(example_router, prefix="/example", tags=["Example Docs"])
+app.include_router(user_router, prefix="/user", tags=["User APIs"])

@@ -21,3 +21,11 @@ class PaginationSchema(BaseModel):
     count: int = Field(description="The number of items returned")
     has_next_page: bool = Field(description="Indicates if there is a next page")
     has_prev_page: bool = Field(description="Indicates if there is a previous page")
+
+
+class Token(BaseModel):
+    """The generic schema for auth tokens (refresh and access)"""
+
+    token_type: str = Field(description="The token's prefix", default="Bearer")
+    access_token: str = Field(description="The access token")
+    refresh_token: str | None = Field(description="The refresh token")
