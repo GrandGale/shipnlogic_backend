@@ -1,10 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Literal
-
 import jwt
 from fastapi import HTTPException, status
-
-
 from app.config.settings import get_settings
 
 
@@ -39,7 +36,7 @@ def generate_user_token(
         "sub": sub,
         "iat": iat.timestamp(),
         "exp": expire.timestamp(),
-        "iss": "ibloom.io",
+        "iss": "shipnlogic.com",
     }
     return jwt.encode(
         payload=data,
