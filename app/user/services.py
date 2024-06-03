@@ -14,7 +14,7 @@ async def create_user(data: create_schemas.UserCreate, db: Session):
         db (Session): The database session
 
     Raises:
-        HTTPException[404]: User with email exists
+        HTTPException[400]: User with email exists
 
     Returns:
         models.User: The created user obj
