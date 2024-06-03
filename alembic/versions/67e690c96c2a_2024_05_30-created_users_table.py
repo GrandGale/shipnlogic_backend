@@ -30,7 +30,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("full_name", sa.String(255), nullable=False),
-        sa.Column("email", sa.String, unique=True,nullable=False),
+        sa.Column("email", sa.String, unique=True, nullable=False),
         sa.Column("exception_alert_email", sa.String, nullable=True),
         sa.Column("password", sa.String, nullable=False),
         sa.Column("is_active", sa.Boolean, default=True),

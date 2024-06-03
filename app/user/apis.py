@@ -60,12 +60,12 @@ async def user_login(
         expire_in = settings.REFRESH_TOKEN_EXPIRE_HOURS
 
     refresh_token = security.generate_user_token(
-        token_type="refresh",
-        sub=f"USER-{user.id}",
-        expire_in=expire_in
+        token_type="refresh", sub=f"USER-{user.id}", expire_in=expire_in
     )
     access_token = security.generate_user_token(
-        token_type="access", sub=f"USER-{user.id}", expire_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+        token_type="access",
+        sub=f"USER-{user.id}",
+        expire_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
     )
     await services.create_user_refresh_token(
         user_id=user.id, token=refresh_token, db=db

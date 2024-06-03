@@ -59,7 +59,7 @@ def test_user_create():
     # Check if the user is already registered
     assert registered_user.status_code == 400
     registered_user = registered_user.json()
-    assert registered_user.get('data', {}).get('message') == f"user with email {good_user["email"]} exists"
+    assert registered_user.get("data", {}).get("message") == f"user with email {good_user["email"]} exists"
 
 def test_user_login():
     """This test is for the user login endpoint"""

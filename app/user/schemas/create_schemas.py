@@ -4,7 +4,6 @@ from pydantic import BaseModel, EmailStr, Field
 class UserCreate(BaseModel):
     """The User creation model"""
 
-
     full_name: str = Field(
         description="The user's full name",
         min_length=1,
