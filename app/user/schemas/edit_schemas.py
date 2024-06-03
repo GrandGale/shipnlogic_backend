@@ -43,12 +43,4 @@ class UserEmailChange(BaseModel):
     edit_token: str = Field(description="The user's edit token", min_length=1)
 
 
-class UserExceptionAlertEmailChange(BaseModel):
-    """This schema is used to change the user's exception alert email"""
 
-    exception_alert_email: EmailStr = Field(
-        description="The user's new exception alert email",
-        min_length=1,
-        examples=["user@shipnlogic.com"],
-    )
-    edit_token: str = Field(description="The user's edit token", min_length=1)

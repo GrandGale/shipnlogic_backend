@@ -4,15 +4,11 @@ from pydantic import BaseModel, EmailStr, Field
 class UserCreate(BaseModel):
     """The User creation model"""
 
-    profile_picture_url: str = Field(
-        description="The url of the image",
-        min_length=1,
-        examples=["https://example.com/image.jpg"],
-    )
+
     full_name: str = Field(
-        description="The user's first name",
+        description="The user's full name",
         min_length=1,
-        max_length=50,
+        max_length=255,
         examples=["Alice"],
     )
     email: EmailStr = Field(

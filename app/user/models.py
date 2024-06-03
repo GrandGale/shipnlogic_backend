@@ -46,6 +46,7 @@ class UserNotification(DBBase):
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=datetime.now, nullable=False)
 
+
 class UserRefreshToken(DBBase):
     """Database model for user refresh tokens"""
 

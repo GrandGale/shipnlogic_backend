@@ -22,19 +22,19 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "users",
-        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
+        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column(
             "profile_picture_url",
-            sa.String(),
+            sa.String,
             server_default="/default_profile.jpg",
             nullable=False,
         ),
-        sa.Column("full_name", sa.String(50), nullable=False),
-        sa.Column("email", sa.String(), unique=True, index=True, nullable=False),
-        sa.Column("exception_alert_email", sa.String(), unique=True, nullable=True),
-        sa.Column("password", sa.String(), nullable=False),
-        sa.Column("is_active", sa.Boolean(), default=True),
-        sa.Column("is_verified", sa.Boolean(), default=False),
+        sa.Column("full_name", sa.String(255), nullable=False),
+        sa.Column("email", sa.String, unique=True,nullable=False),
+        sa.Column("exception_alert_email", sa.String, nullable=True),
+        sa.Column("password", sa.String, nullable=False),
+        sa.Column("is_active", sa.Boolean, default=True),
+        sa.Column("is_verified", sa.Boolean, default=False),
         sa.Column("last_login", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "created_at",
