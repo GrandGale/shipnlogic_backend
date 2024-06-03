@@ -41,6 +41,3 @@ class UserEmailChange(BaseModel):
         examples=["user@shipnlogic.com"],
     )
     edit_token: str = Field(description="The user's edit token", min_length=1)
-
-
-
