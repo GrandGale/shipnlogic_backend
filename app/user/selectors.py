@@ -98,3 +98,27 @@ async def get_current_user(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid token type",
     )
+
+
+async def get_user_refresh_token(user_id: int, token: str, db: Session):
+    """This function returns a user refresh token
+
+    Args:
+        user_id (int): The user's ID
+        token (str): The user's refresh token
+        db (Session): The database session
+
+    Returns:
+        (models.UserRefreshToken): The user refresh token obj
+    """
+    obj = (
+        db.query(models.UserRefreshToken)
+        .filter_by(user_id=user_id, token=token)
+        .first()
+    )
+    if not obj:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Token",
+        )
+    return obj

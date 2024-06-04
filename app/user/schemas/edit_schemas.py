@@ -41,3 +41,13 @@ class UserEmailChange(BaseModel):
         examples=["user@shipnlogic.com"],
     )
     edit_token: str = Field(description="The user's edit token", min_length=1)
+
+class UserConfigurationEdit(BaseModel):
+    """The edit schema for user configurations"""
+
+    notification_email: bool = Field(
+        description="The user email notification status"
+    )
+    notification_inapp: bool = Field(
+        description="The user in-app notification status"
+    )

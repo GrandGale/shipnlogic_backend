@@ -1,15 +1,17 @@
-from fastapi import APIRouter
 from fastapi import APIRouter, Body, HTTPException, status
+from datetime import datetime
 from app.user.schemas import (
     response_schemas,
     create_schemas,
     base_schemas,
     edit_schemas,
 )
-from app.common.annotations import DatabaseSession
-from app.user import services, security
+from app.common.annotations import DatabaseSession, PaginationParams
+from app.user import services, security, selectors, models
 from app.config.settings import get_settings
 from app.user.annotations import CurrentUser
+from app.common.schemas import ResponseSchema
+from app.common.paginators import paginate, get_pagination_metadata
 
 settings = get_settings()
 
@@ -93,3 +95,164 @@ async def user_edit(
     """This endpoint is used to edit the user's details"""
     user = await services.edit_user(user_id=user.id, data=user_in, db=db)
     return {"data": user}
+
+
+@router.post(
+    "/token",
+    summary="Generate User Access Token",
+    response_description="The user's access token",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseSchema,
+)
+async def user_refresh_token(
+    db: DatabaseSession,
+    refresh_token: str = Body(
+        description="The user's refresh token", min_length=1, embed=True
+    ),
+):
+    """This endpoint generates a new access token for the user using the refresh token"""
+    if user_id := security.verify_user_refresh_token(token=refresh_token):
+        await selectors.get_user_refresh_token(
+            user_id=user_id, token=refresh_token, db=db
+        )
+        user = await selectors.get_user_by_id(user_id=user_id, db=db)
+        user.last_login = datetime.now()
+        db.commit()
+        return {
+            "data": {
+                "access_token": security.generate_user_token(
+                    token_type="access",
+                    sub=f"USER-{user_id}",
+                    expire_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+                )
+            }
+        }
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token"
+    )
+
+
+@router.delete(
+    "/logout",
+    summary="Logout User",
+    response_description="User has been logged out",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseSchema,
+)
+async def guardian_logout(current_user: CurrentUser, db: DatabaseSession):
+    """This endpoint logs out the current user by deleting all their refresh tokens"""
+    db.query(models.UserRefreshToken).filter_by(user_id=current_user.id).delete()
+    db.commit()
+    return {"data": {"message": "Guardian has been logged out"}}
+
+
+@router.get(
+    "/me",
+    summary="Get user details",
+    response_description="The user's details",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.UserResponse,
+)
+def guardian_me(guardian: CurrentUser):
+    """The endpoint returns the details of the current logged in user"""
+    return {"data": guardian}
+
+
+@router.get(
+    "/configurations",
+    summary="Get User Configuration",
+    response_description="The user's configuration",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.UserConfigurationResponse,
+)
+async def guardian_configurations(current_user: CurrentUser, db: DatabaseSession):
+    """This endpoint returns the guardian's configurations"""
+
+    return {
+        "data": await selectors.get_user_configuration_by_user_id(
+            user_id=current_user.id, db=db
+        )
+    }
+
+
+@router.put(
+    "/configurations",
+    summary="Edit User Configurations",
+    response_description="The user's configuration (new)",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.UserConfigurationResponse,
+)
+async def user_configurations_edit(
+    configuration_in: edit_schemas.UserConfigurationEdit,
+    current_user: CurrentUser,
+    db: DatabaseSession,
+):
+    """This endpoint returns the user's configurations"""
+    configurations = await selectors.get_user_configuration_by_user_id(
+        user_id=current_user.id, db=db
+    )
+
+    # Update configurations
+    for field, value in configuration_in.model_dump().items():
+        setattr(configurations, field, value)
+    db.commit()
+
+    return {"data": configurations}
+
+
+@router.get(
+    "/notifications",
+    summary="Get User Notification List",
+    response_description="The list of the user's notifications",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.UserNotificationListResponse,
+)
+async def guardian_notifications(
+    pagination: PaginationParams,
+    current_user: CurrentUser,
+    db: DatabaseSession,
+):
+    """This endpoint returns a paginated list of the current logged in user's notifications"""
+    notifications_qs = db.query(models.UserNotification).filter_by(
+        user_id=current_user.id
+    )
+    paginated_notifications: list[models.UserNotification] = paginate(
+        qs=notifications_qs, page=pagination.page, size=pagination.size
+    )
+    return {
+        "data": {
+            "notifications": [
+                {
+                    "id": noti.id,
+                    "content": noti.content,
+                    "created_at": noti.created_at,
+                    "is_read": noti.is_read,
+                }
+                for noti in paginated_notifications
+            ],
+            "unread": any(not noti.is_read for noti in paginated_notifications),
+            "meta": get_pagination_metadata(
+                qs=notifications_qs,
+                count=len(paginated_notifications),
+                page=pagination.page,
+                size=pagination.size,
+            ),
+        }
+    }
+
+
+@router.put(
+    "/notifications/read",
+    summary="Mark User Notifications as Read",
+    response_description="Notifications have been marked as read",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseSchema,
+)
+async def user_notification_read(current_user: CurrentUser, db: DatabaseSession):
+    """This endpoint marks all the user's notifications as read"""
+
+    db.query(models.UserNotification).filter_by(
+        user_id=current_user.id, is_read=False
+    ).update({"is_read": True}, synchronize_session=False)
+    db.commit()
+    return {"data": {"message": "Notifications have been marked as read"}}
