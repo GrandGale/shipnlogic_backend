@@ -1,7 +1,8 @@
-from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 
-from app.common.schemas import Token, PaginationSchema
+from pydantic import BaseModel, EmailStr, Field
+
+from app.common.schemas import PaginationSchema, Token
 
 
 class User(BaseModel):
@@ -35,16 +36,14 @@ class UserLoginCredential(BaseModel):
         default=False,
     )
 
+
 class UserConfiguration(BaseModel):
     """The base user configuration model"""
 
     id: int = Field(description="The user configuration ID")
-    notification_email: bool = Field(
-        description="The user email notification status"
-    )
-    notification_inapp: bool = Field(
-        description="The user in-app notification status"
-    )
+    notification_email: bool = Field(description="The user email notification status")
+    notification_inapp: bool = Field(description="The user in-app notification status")
+
 
 class UserNotification(BaseModel):
     """The base schema for user notifications"""
@@ -54,11 +53,12 @@ class UserNotification(BaseModel):
     is_read: bool = Field(description="The notification read status")
     created_at: datetime = Field(description="The notification created date")
 
+
 class PaginatedUserNotification(BaseModel):
     """The base schema for paginated user notifications"""
 
     notifications: list[UserNotification] = Field(
-        description="The list of guardian notifications"
+        description="The list of user notifications"
     )
     unread: bool = Field(description="Indicates if there are unread notifications")
     meta: PaginationSchema = Field(description="The pagination details")

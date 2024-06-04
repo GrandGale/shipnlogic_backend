@@ -1,17 +1,19 @@
-from fastapi import APIRouter, Body, HTTPException, status
 from datetime import datetime
-from app.user.schemas import (
-    response_schemas,
-    create_schemas,
-    base_schemas,
-    edit_schemas,
-)
+
+from fastapi import APIRouter, Body, HTTPException, status
+
 from app.common.annotations import DatabaseSession, PaginationParams
-from app.user import services, security, selectors, models
-from app.config.settings import get_settings
-from app.user.annotations import CurrentUser
+from app.common.paginators import get_pagination_metadata, paginate
 from app.common.schemas import ResponseSchema
-from app.common.paginators import paginate, get_pagination_metadata
+from app.config.settings import get_settings
+from app.user import models, security, selectors, services
+from app.user.annotations import CurrentUser
+from app.user.schemas import (
+    base_schemas,
+    create_schemas,
+    edit_schemas,
+    response_schemas,
+)
 
 settings = get_settings()
 
@@ -139,11 +141,11 @@ async def user_refresh_token(
     status_code=status.HTTP_200_OK,
     response_model=ResponseSchema,
 )
-async def guardian_logout(current_user: CurrentUser, db: DatabaseSession):
+async def user_logout(current_user: CurrentUser, db: DatabaseSession):
     """This endpoint logs out the current user by deleting all their refresh tokens"""
     db.query(models.UserRefreshToken).filter_by(user_id=current_user.id).delete()
     db.commit()
-    return {"data": {"message": "Guardian has been logged out"}}
+    return {"data": {"message": "User has been logged out"}}
 
 
 @router.get(
@@ -153,9 +155,9 @@ async def guardian_logout(current_user: CurrentUser, db: DatabaseSession):
     status_code=status.HTTP_200_OK,
     response_model=response_schemas.UserResponse,
 )
-def guardian_me(guardian: CurrentUser):
+def user_me(user: CurrentUser):
     """The endpoint returns the details of the current logged in user"""
-    return {"data": guardian}
+    return {"data": user}
 
 
 @router.get(
@@ -165,8 +167,8 @@ def guardian_me(guardian: CurrentUser):
     status_code=status.HTTP_200_OK,
     response_model=response_schemas.UserConfigurationResponse,
 )
-async def guardian_configurations(current_user: CurrentUser, db: DatabaseSession):
-    """This endpoint returns the guardian's configurations"""
+async def user_configurations(current_user: CurrentUser, db: DatabaseSession):
+    """This endpoint returns the user's configurations"""
 
     return {
         "data": await selectors.get_user_configuration_by_user_id(
@@ -207,7 +209,7 @@ async def user_configurations_edit(
     status_code=status.HTTP_200_OK,
     response_model=response_schemas.UserNotificationListResponse,
 )
-async def guardian_notifications(
+async def user_notifications(
     pagination: PaginationParams,
     current_user: CurrentUser,
     db: DatabaseSession,

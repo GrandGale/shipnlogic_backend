@@ -1,6 +1,8 @@
 from pydantic import Field
+
 from app.common.schemas import ResponseSchema
-from app.user.schemas.base_schemas import User, UserLogin, UserConfiguration, PaginatedUserNotification
+from app.user.schemas.base_schemas import (PaginatedUserNotification, User,
+                                           UserConfiguration, UserLogin)
 
 
 class UserResponse(ResponseSchema):
@@ -19,6 +21,7 @@ class UserConfigurationResponse(ResponseSchema):
     """This is the response schema for the user configuration"""
 
     data: UserConfiguration = Field(description="The user's configuration")
+
 
 class UserNotificationListResponse(ResponseSchema):
     """This is the response schema for the user notification list"""

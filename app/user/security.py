@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 from typing import Literal
+
 import jwt
 from fastapi import HTTPException, status
-from app.config.settings import get_settings
 
+from app.config.settings import get_settings
 
 settings = get_settings()
 

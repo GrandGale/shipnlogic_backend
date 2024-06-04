@@ -1,16 +1,16 @@
-from fastapi import Depends, Header, status, HTTPException
+from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
-from app.config.settings import get_settings
-from app.common.dependencies import get_db
-from app.user import models, security
 
+from app.common.dependencies import get_db
+from app.config.settings import get_settings
+from app.user import models, security
 
 settings = get_settings()
 
 
 async def get_user_by_id(user_id: int, db: Session, raise_exception: bool = True):
     """This function returns a user obj using it's id
-
+F
     Args:
         user_id (int): The user's id
         db (Session): The database session

@@ -5,10 +5,13 @@ from fastapi.testclient import TestClient
 
 from app.common.dependencies import get_db
 from app.main import app
+from app.user import models as user_models, security
+
 from tests.deps_overrides import get_test_db
 
 # App Dependency Overrides
 app.dependency_overrides[get_db] = get_test_db
+
 
 # Initialize the TestClient
 client = TestClient(app)
@@ -113,6 +116,34 @@ def test_user_login():
     REFRESH_TOKEN += response_data["data"]["tokens"]["refresh_token"]
 
 
+def test_user_me():
+    """This test is for the user detail (me) endpoint"""
+    good_response = client.get(
+        "/users/me",
+        headers={"Authorization": ACCESS_TOKEN},
+    )
+    bad_response = client.get(
+        "/users/me",
+        headers={"Authorization": f"Bearer {faker.sha256()}"},  # Invalid Token
+    )
+
+    # Check bad response
+    assert bad_response.status_code == 401
+
+    # Check good response
+    response_data = good_response.json()
+
+    assert good_response.status_code == 200
+    assert response_data["data"]["id"] is not None
+    assert response_data["data"]["full_name"] == USER["full_name"]
+    assert response_data["data"]["email"] == USER["email"]
+    assert (
+        response_data["data"]["exception_alert_email"] == USER["exception_alert_email"]
+    )
+    assert response_data["data"]["is_active"] is True
+    assert response_data["data"]["is_verified"] is False
+
+
 def test_user_edit():
     """This test is for the user edit endpoint"""
     new_user = USER.copy()
@@ -157,3 +188,87 @@ def test_user_edit():
     assert bad_user.status_code == 401
     bad_user = bad_user.json()
     assert bad_user.get("data", {}).get("message") == "Invalid token"
+
+
+def test_user_token():
+    """This test is for the user token endpoint"""
+    bad_response = client.post("/users/token", json={"refresh_token": faker.sha256()})
+    good_response = client.post("/users/token", json={"refresh_token": REFRESH_TOKEN})
+
+    # Check bad response
+    assert bad_response.status_code == 401
+
+    # Check good response
+    response_data = good_response.json()
+    assert good_response.status_code == 200
+    assert "access_token" in response_data["data"]
+
+
+def test_user_logout():
+    """This test is for the user logout endpoint"""
+
+    bad_response = client.delete(
+        "/users/logout",
+        headers={"Authorization": f"Bearer {faker.sha256()}"},  # Invalid Token
+    )
+    good_response = client.delete(
+        "/users/logout",
+        headers={"Authorization": ACCESS_TOKEN},
+    )
+
+    # Check bad response
+    assert bad_response.status_code == 401
+
+    # Check good response
+    assert good_response.status_code == 200
+
+
+def test_user_notifications():
+    """This test is for the user notifications endpoint"""
+    db = next(get_test_db())
+
+    # Get existing user
+    existing_user = db.query(user_models.User).first()
+
+    assert existing_user is not None
+
+    # Generate access token
+    access_token = security.generate_user_token(
+        token_type="access", sub=f"USER-{existing_user.id}", expire_in=3
+    )
+
+    good_response = client.get(
+        "/users/notifications",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    # Check good response
+    assert good_response.status_code == 200
+
+
+def test_user_notification_read():
+    """This test is for the user notification read endpoint"""
+    db = next(get_test_db())
+
+    # Get existing user
+    existing_user = db.query(user_models.User).first()
+
+    assert existing_user is not None
+
+    # Generate access token
+    access_token = security.generate_user_token(
+        token_type="access", sub=f"GUARDIAN-{existing_user.id}", expire_in=3
+    )
+
+    # Get existing notification
+    existing_notification = db.query(user_models.UserNotification).first()
+
+    assert existing_notification is not None
+
+    good_response = client.put(
+        "/users/notifications/read",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    # Check good response
+    assert good_response.status_code == 200
