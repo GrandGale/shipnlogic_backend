@@ -1,5 +1,7 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+
 from app.config.database import DBBase
 
 
@@ -57,3 +59,17 @@ class UserRefreshToken(DBBase):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     token = Column(String, nullable=False)
+
+
+class UserPasswordResetToken(DBBase):
+    """Database model for user password reset tokens"""
+
+    __tablename__ = "user_password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    token = Column(String, unique=True, nullable=False)
+    is_used = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.now, nullable=False)

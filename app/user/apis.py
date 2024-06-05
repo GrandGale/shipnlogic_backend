@@ -5,15 +5,12 @@ from fastapi import APIRouter, Body, HTTPException, status
 from app.common.annotations import DatabaseSession, PaginationParams
 from app.common.paginators import get_pagination_metadata, paginate
 from app.common.schemas import ResponseSchema
+from app.common.security import hash_password, verify_password
 from app.config.settings import get_settings
 from app.user import models, security, selectors, services
 from app.user.annotations import CurrentUser
-from app.user.schemas import (
-    base_schemas,
-    create_schemas,
-    edit_schemas,
-    response_schemas,
-)
+from app.user.schemas import (base_schemas, create_schemas, edit_schemas,
+                              response_schemas)
 
 settings = get_settings()
 
@@ -258,3 +255,54 @@ async def user_notification_read(current_user: CurrentUser, db: DatabaseSession)
     ).update({"is_read": True}, synchronize_session=False)
     db.commit()
     return {"data": {"message": "Notifications have been marked as read"}}
+
+
+@router.post(
+    "/password/confirm",
+    summary="Confirm User's Password",
+    response_description="Password Confirmed",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseSchema,
+)
+async def user_password_confirm(
+    current_user: CurrentUser,
+    password: str = Body(description="The user's password", min_length=1, embed=True),
+):
+    """This endpoints confirms the user's password"""
+
+    if verify_password(plain_password=password, hashed_password=current_user.password):
+        return {"data": {"is_correct": True}}
+    return {"data": {"is_correct": False}}
+
+
+@router.put(
+    "/password/change",
+    summary="Change User Password",
+    response_description="The User's Details",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.UserResponse,
+)
+async def user_password_change(
+    password_change: edit_schemas.UserPasswordChange,
+    current_user: CurrentUser,
+    db: DatabaseSession,
+):
+    """This endpoint changes the user's password"""
+
+    if verify_password(
+        plain_password=password_change.old_password,
+        hashed_password=current_user.password,
+    ):
+        current_user.password = hash_password(raw=password_change.new_password)
+        db.commit()
+
+        # Notifications
+        await services.create_user_notification(
+            user_id=current_user.id,
+            content="You have successfully changed your password",
+            db=db,
+        )
+        return {"data": current_user}
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST, detail="incorrect Password"
+    )
