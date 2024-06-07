@@ -62,3 +62,20 @@ class PaginatedUserNotification(BaseModel):
     )
     unread: bool = Field(description="Indicates if there are unread notifications")
     meta: PaginationSchema = Field(description="The pagination details")
+
+
+class Company(BaseModel):
+    """The base company model"""
+
+    id: int = Field(description="The company's ID")
+    name: str = Field(description="The company's name")
+    registration_number: str = Field(description="The company's registration number")
+    email: str = Field(description="The company's email")
+    phone: str = Field(description="The company's phone number")
+    address: str = Field(description="The company's address")
+    tax_identification_number: str = Field(
+        description="The company's tax identification number"
+    )
+    is_verified: bool = Field(description="Whether the user is verified")
+    permit_image_url: str = Field(description="The company's permit image URL")
+    license_image_url: str = Field(description="The company's license image URL")
