@@ -2,6 +2,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Body, HTTPException, status
 from pydantic import EmailStr
+
 from app.common.annotations import DatabaseSession, PaginationParams
 from app.common.paginators import get_pagination_metadata, paginate
 from app.common.schemas import ResponseSchema
@@ -9,12 +10,8 @@ from app.common.security import hash_password, verify_password
 from app.config.settings import get_settings
 from app.user import models, security, selectors, services
 from app.user.annotations import CurrentUser
-from app.user.schemas import (
-    base_schemas,
-    create_schemas,
-    edit_schemas,
-    response_schemas,
-)
+from app.user.schemas import (base_schemas, create_schemas, edit_schemas,
+                              response_schemas)
 
 settings = get_settings()
 
@@ -115,9 +112,7 @@ async def user_refresh_token(
 ):
     """This endpoint generates a new access token for the user using the refresh token"""
     user_id = security.verify_user_refresh_token(token=refresh_token)
-    await selectors.get_user_refresh_token(
-        user_id=user_id, token=refresh_token, db=db
-    )
+    await selectors.get_user_refresh_token(user_id=user_id, token=refresh_token, db=db)
     user = await selectors.get_user_by_id(user_id=user_id, db=db)
     user.last_login = datetime.now()
     db.commit()
@@ -307,39 +302,3 @@ async def user_password_change(
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST, detail="incorrect Password"
     )
-
-
-@router.post(
-    "/newsletter",
-    summary="Subscribe to Newsletter",
-    response_description="You have subscribed to our newsletter",
-    status_code=status.HTTP_200_OK,
-    response_model=ResponseSchema,
-)
-async def user_newsletter_subscription(
-    db: DatabaseSession,
-    email: EmailStr = Body(
-        description="The user's email address", min_lenght=1, embed=True
-    ),
-):
-    """This endpoint subscribes the user to the newsletter"""
-    await services.create_newsletter_subscriber(email=email, db=db)
-    return {"data": {"message": "You have successfully subscribed to our newsletter"}}
-
-
-@router.post(
-    "/company",
-    summary="Create a new company",
-    response_description="The created company's data",
-    status_code=status.HTTP_201_CREATED,
-    response_model=response_schemas.CompanyResponse,
-)
-async def company_create(current_user: CurrentUser, data: create_schemas.CompanyCreate, db: DatabaseSession):
-    """Create a new company"""
-    created_company = await services.create_company(user_id=current_user.id, data=data, db=db)
-
-    # Send Notification
-    await services.create_user_notification(
-        user_id=current_user.id, content="Company has been added successfully :)", db=db
-    )
-    return {"data": created_company}
