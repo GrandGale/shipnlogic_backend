@@ -114,8 +114,8 @@ async def user_refresh_token(
     ),
 ):
     """This endpoint generates a new access token for the user using the refresh token"""
+    await selectors.get_user_refresh_token(token=refresh_token, db=db)
     user_id = security.verify_user_refresh_token(token=refresh_token)
-    await selectors.get_user_refresh_token(user_id=user_id, token=refresh_token, db=db)
     user = await selectors.get_user_by_id(user_id=user_id, db=db)
     user.last_login = datetime.now()
     db.commit()
