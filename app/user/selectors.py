@@ -10,17 +10,17 @@ settings = get_settings()
 
 async def get_user_by_id(user_id: int, db: Session, raise_exception: bool = True):
     """This function returns a user obj using it's id
-    F
-        Args:
-            user_id (int): The user's id
-            db (Session): The database session
-            raise_exception (bool, default=True): Raise HTTPException[404] when user isn't found
 
-        Raises:
-            HTTPException[404]: User not found
+    Args:
+        user_id (int): The user's id
+        db (Session): The database session
+        raise_exception (bool, default=True): Raise HTTPException[404] when user isn't found
 
-        Returns:
-            (models.User| None): The User obj or None
+    Raises:
+        HTTPException[404]: User not found
+
+    Returns:
+        (models.User| None): The User obj or None
     """
     if obj := db.query(models.User).filter_by(id=user_id).first():
         return obj
@@ -111,14 +111,13 @@ async def get_user_refresh_token(user_id: int, token: str, db: Session):
     Returns:
         (models.UserRefreshToken): The user refresh token obj
     """
-    obj = (
+    if obj := (
         db.query(models.UserRefreshToken)
         .filter_by(user_id=user_id, token=token)
         .first()
+    ):
+        return obj
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid Token",
     )
-    if not obj:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Token",
-        )
-    return obj

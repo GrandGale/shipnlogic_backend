@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Body, HTTPException, status
-from pydantic import EmailStr
 
 from app.common.annotations import DatabaseSession, PaginationParams
 from app.common.paginators import get_pagination_metadata, paginate
