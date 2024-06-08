@@ -9,8 +9,12 @@ from app.common.security import hash_password, verify_password
 from app.config.settings import get_settings
 from app.user import models, security, selectors, services
 from app.user.annotations import CurrentUser
-from app.user.schemas import (base_schemas, create_schemas, edit_schemas,
-                              response_schemas)
+from app.user.schemas import (
+    base_schemas,
+    create_schemas,
+    edit_schemas,
+    response_schemas,
+)
 
 settings = get_settings()
 
