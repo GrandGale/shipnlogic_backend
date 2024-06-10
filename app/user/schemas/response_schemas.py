@@ -1,8 +1,13 @@
 from pydantic import Field
 
 from app.common.schemas import ResponseSchema
-from app.user.schemas.base_schemas import (Company, PaginatedUserNotification,
-                                           User, UserConfiguration, UserLogin)
+from app.user.schemas.base_schemas import (
+    Company,
+    PaginatedUserNotification,
+    User,
+    UserConfiguration,
+    UserLogin,
+)
 
 
 class UserResponse(ResponseSchema):

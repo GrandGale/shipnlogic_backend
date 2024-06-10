@@ -2,6 +2,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Body, HTTPException, status
 from pydantic import EmailStr
+
 from app.common.annotations import DatabaseSession, PaginationParams
 from app.common.paginators import get_pagination_metadata, paginate
 from app.common.schemas import ResponseSchema
@@ -115,9 +116,7 @@ async def user_refresh_token(
 ):
     """This endpoint generates a new access token for the user using the refresh token"""
     user_id = security.verify_user_refresh_token(token=refresh_token)
-    await selectors.get_user_refresh_token(
-        user_id=user_id, token=refresh_token, db=db
-    )
+    await selectors.get_user_refresh_token(user_id=user_id, token=refresh_token, db=db)
     user = await selectors.get_user_by_id(user_id=user_id, db=db)
     user.last_login = datetime.now()
     db.commit()
@@ -334,9 +333,13 @@ async def user_newsletter_subscription(
     status_code=status.HTTP_200_OK,
     response_model=response_schemas.CompanyResponse,
 )
-async def company_create(current_user: CurrentUser, data: create_schemas.CompanyCreate, db: DatabaseSession):
+async def company_create(
+    current_user: CurrentUser, data: create_schemas.CompanyCreate, db: DatabaseSession
+):
     """Create a new company"""
-    created_company = await services.create_company(user_id=current_user.id, data=data, db=db)
+    created_company = await services.create_company(
+        user_id=current_user.id, data=data, db=db
+    )
 
     # Send Notification
     await services.create_user_notification(

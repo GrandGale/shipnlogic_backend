@@ -1,8 +1,8 @@
 from datetime import datetime
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
 from pydantic import EmailStr
+from sqlalchemy.orm import Session
 
 from app.common.security import hash_password, verify_password
 from app.user import models, selectors
