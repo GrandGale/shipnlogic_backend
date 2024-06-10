@@ -2,6 +2,7 @@ from datetime import datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from pydantic import EmailStr
 
 from app.common.security import hash_password, verify_password
 from app.user import models, selectors
@@ -162,7 +163,7 @@ async def edit_user(user_id: int, data: edit_schemas.UserEdit, db: Session):
     return obj
 
 
-async def create_newsletter_subscriber(email: str, db: Session):
+async def create_newsletter_subscriber(email: EmailStr, db: Session):
     """This function creates a newsletter subscription
 
     Args:
@@ -207,6 +208,31 @@ async def create_company(user_id: int, data: create_schemas.CompanyCreate, db: S
     obj = models.Company(**data.model_dump())
     obj.user_id = user_id
     db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+
+async def edit_company(user_id: int, data: edit_schemas.CompanyEdit, db: Session):
+    """This function edits a company's details
+
+    Args:
+        user_id (int): The user's ID
+        data (edit_schemas.CompanyEdit): The company's data
+        db (Session): The database session
+
+    Returns:
+        models.Company: The edited company obj
+    """
+    obj = db.query(models.Company).filter_by(user_id=user_id).first()
+    data = data.model_dump(exclude_unset=True)
+    if data == {}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No data to update",
+        )
+    for field, value in data.items():
+        setattr(obj, field, value)
     db.commit()
     db.refresh(obj)
     return obj

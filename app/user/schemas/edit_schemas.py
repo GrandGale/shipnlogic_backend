@@ -48,3 +48,38 @@ class UserConfigurationEdit(BaseModel):
 
     notification_email: bool = Field(description="The user email notification status")
     notification_inapp: bool = Field(description="The user in-app notification status")
+
+
+class CompanyEdit(BaseModel):
+    """This schema is used to edit the company's details"""
+
+    name: str | None = Field(
+        description="The company's name", min_length=1, default=None
+    )
+    registration_number: str | None = Field(
+        description="The company's registration number", min_length=1, default=None
+    )
+    email: EmailStr | None = Field(
+        description="The company's email", min_length=1, default=None
+    )
+    phone: str | None = Field(
+        description="The company's phone number", min_length=1, default=None
+    )
+    address: str | None = Field(
+        description="The company's address", min_length=1, default=None
+    )
+    tax_identification_number: str | None = Field(
+        description="The company's tax identification number",
+        min_length=1,
+        default=None,
+    )
+    permit_image_url: str | None = Field(
+        description="The company's permit image URL",
+        min_length=1,
+        default=None,
+    )
+    license_image_url: str | None = Field(
+        description="The company's license image URL",
+        min_length=1,
+        default=None,
+    )

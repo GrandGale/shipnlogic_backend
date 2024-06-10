@@ -311,7 +311,7 @@ async def user_password_change(
 
 @router.post(
     "/newsletter",
-    summary="Subscribe to Newsletter",
+    summary="Subscribe to a Newsletter",
     response_description="You have subscribed to our newsletter",
     status_code=status.HTTP_200_OK,
     response_model=ResponseSchema,
@@ -331,7 +331,7 @@ async def user_newsletter_subscription(
     "/company",
     summary="Create a new company",
     response_description="The created company's data",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=response_schemas.CompanyResponse,
 )
 async def company_create(current_user: CurrentUser, data: create_schemas.CompanyCreate, db: DatabaseSession):
@@ -343,3 +343,20 @@ async def company_create(current_user: CurrentUser, data: create_schemas.Company
         user_id=current_user.id, content="Company has been added successfully :)", db=db
     )
     return {"data": created_company}
+
+
+@router.put(
+    "/company",
+    summary="Edit Company Details",
+    response_description="The Company's Details (Edited)",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.CompanyResponse,
+)
+async def company_edit(
+    data: edit_schemas.CompanyEdit,
+    user: CurrentUser,
+    db: DatabaseSession,
+):
+    """This endpoint is used to edit the user's details"""
+    company = await services.edit_company(user_id=user.id, data=data, db=db)
+    return {"data": company}
