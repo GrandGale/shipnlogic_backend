@@ -74,4 +74,4 @@ async def health_check(_=Depends(get_db)):
 
 
 # Routers
-app.include_router(user_router, prefix="/user", tags=["User APIs"])
+app.include_router(user_router, prefix="/users", tags=["User APIs"])
