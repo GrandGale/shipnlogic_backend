@@ -73,3 +73,29 @@ class UserPasswordResetToken(DBBase):
     token = Column(String, unique=True, nullable=False)
     is_used = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=datetime.now, nullable=False)
+
+
+class NewsLetter(DBBase):
+    """ Database model for newsletter subscribers"""
+    
+    __tablename__ = "newsletter"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String, unique=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.now, nullable=False)
+
+
+class Company(DBBase):
+    """ Database model for company""" 
+    __tablename__ = "companies"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    registration_number = Column(String, unique=True, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    phone = Column(String, unique=True, nullable=False)
+    address = Column(String, nullable=False)
+    tax_identification_number = Column(String, unique=True, nullable=False)
+    license_image_url = Column(String, default="/default_license.jpg", nullable=False)
+    permit_image_url = Column(String, default="/default_permit.jpg", nullable=False)
+    is_verified = Column(Boolean, default=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.now, nullable=False)

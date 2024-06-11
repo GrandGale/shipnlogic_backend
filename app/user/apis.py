@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Body, HTTPException, status
+from pydantic import EmailStr
 
 from app.common.annotations import DatabaseSession, PaginationParams
 from app.common.paginators import get_pagination_metadata, paginate
@@ -305,3 +306,60 @@ async def user_password_change(
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST, detail="incorrect Password"
     )
+
+
+@router.post(
+    "/newsletter",
+    summary="Subscribe to a Newsletter",
+    response_description="You have subscribed to our newsletter",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseSchema,
+)
+async def user_newsletter_subscription(
+    db: DatabaseSession,
+    email: EmailStr = Body(
+        description="The user's email address", min_lenght=1, embed=True
+    ),
+):
+    """This endpoint subscribes the user to the newsletter"""
+    await services.create_newsletter_subscriber(email=email, db=db)
+    return {"data": {"message": "You have successfully subscribed to our newsletter"}}
+
+
+@router.post(
+    "/company",
+    summary="Create a new company",
+    response_description="The created company's data",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.CompanyResponse,
+)
+async def company_create(
+    current_user: CurrentUser, data: create_schemas.CompanyCreate, db: DatabaseSession
+):
+    """Create a new company"""
+    created_company = await services.create_company(
+        user_id=current_user.id, data=data, db=db
+    )
+
+    # Send Notification
+    await services.create_user_notification(
+        user_id=current_user.id, content="Company has been added successfully :)", db=db
+    )
+    return {"data": created_company}
+
+
+@router.put(
+    "/company",
+    summary="Edit Company Details",
+    response_description="The Company's Details (Edited)",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.CompanyResponse,
+)
+async def company_edit(
+    data: edit_schemas.CompanyEdit,
+    user: CurrentUser,
+    db: DatabaseSession,
+):
+    """This endpoint is used to edit the user's details"""
+    company = await services.edit_company(user_id=user.id, data=data, db=db)
+    return {"data": company}

@@ -272,3 +272,201 @@ def test_user_notification_read():
 
     # Check good response
     assert good_response.status_code == 200
+
+
+def test_user_password_change():
+    """This test is for the user change password endpoint"""
+    db = next(get_test_db())
+
+    # Generate good reset password token
+    existing_user = db.query(user_models.User).first()
+    assert existing_user is not None  # Confirm that a guardian exists
+
+    # Generate access token
+    access_token = security.generate_user_token(
+        token_type="access", sub=f"USER-{existing_user.id}", expire_in=3
+    )
+
+    bad_response = client.put(
+        "/users/password/change",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json={"old_password": faker.password(), "new_password": faker.password()},
+    )
+    good_response = client.put(
+        "/users/password/change",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json={"old_password": "admin", "new_password": "admin"},
+    )
+
+    # Check bad response
+    assert bad_response.status_code == 400
+
+    # Check good response
+    assert good_response.status_code == 200
+
+
+def test_user_password_confirm():
+    """This test is for the user confirm password endpoint"""
+    db = next(get_test_db())
+
+    # Generate good reset password token
+    existing_user = db.query(user_models.User).first()
+    assert existing_user is not None  # Confirm that a user exists
+
+    # Generate access token
+    access_token = security.generate_user_token(
+        token_type="access", sub=f"USER-{existing_user.id}", expire_in=3
+    )
+
+    bad_response = client.post(
+        "/users/password/confirm",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json={"password": faker.password()},
+    )
+    good_response = client.post(
+        "/users/password/confirm",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json={"password": "admin"},
+    )
+
+    # Check bad response
+    bad_response_data = bad_response.json()
+
+    assert bad_response_data["data"]["is_correct"] is False
+
+    # Check good response
+    good_response_data = good_response.json()
+
+    assert good_response_data["data"]["is_correct"] is True
+
+
+def test_get_user_configurations():
+    """This test is for the get user configurations endpoint"""
+    db = next(get_test_db())
+
+    # Generate good reset password token
+    existing_user = db.query(user_models.User).first()
+    assert existing_user is not None  # Confirm that a user exists
+
+    # Generate access token
+    access_token = security.generate_user_token(
+        token_type="access", sub=f"USER-{existing_user.id}", expire_in=3
+    )
+
+    good_response = client.get(
+        "/users/configurations",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    # Check good response
+    assert good_response.status_code == 200
+
+
+def test_user_configurations_edit():
+    """This test is for the user configurations edit endpoint"""
+    db = next(get_test_db())
+
+    # Generate good reset password token
+    existing_user = db.query(user_models.User).first()
+    assert existing_user is not None  # Confirm that a user exists
+
+    # Generate access token
+    access_token = security.generate_user_token(
+        token_type="access", sub=f"USER-{existing_user.id}", expire_in=3
+    )
+
+    good_response = client.put(
+        "/users/configurations",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json={"notification_email": False, "notification_inapp": False},
+    )
+
+    # Check good response
+    assert good_response.status_code == 200
+
+
+def test_news_letter_subscribe():
+    """This test is for the news letter subscribe endpoint"""
+    db = next(get_test_db())
+
+    # Generate good reset password token
+    existing_user = db.query(user_models.User).first()
+    assert existing_user is not None  # Confirm that a user exists
+
+    # Generate access token
+    access_token = security.generate_user_token(
+        token_type="access", sub=f"USER-{existing_user.id}", expire_in=3
+    )
+
+    good_response = client.post(
+        "/users/newsletter",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json={"email": faker.email()},
+    )
+
+    # Check good response
+    assert good_response.status_code == 200
+
+
+COMPANY = {
+    "name": faker.name(),
+    "registration_number": faker.name(),
+    "email": faker.email(),
+    "phone": faker.phone_number(),
+    "address": faker.address(),
+    "tax_identification_number": faker.name(),
+}
+
+
+def test_company_create():
+    """This test is for the create company endpoint"""
+    db = next(get_test_db())
+
+    # Generate good reset password token
+    existing_user = db.query(user_models.User).first()
+    assert existing_user is not None  # Confirm that a user exists
+
+    # Generate access token
+    access_token = security.generate_user_token(
+        token_type="access", sub=f"USER-{existing_user.id}", expire_in=3
+    )
+    company = COMPANY.copy()
+
+    good_response = client.post(
+        "users/company",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json=company,
+    )
+
+    # Check good response
+    assert good_response.status_code == 200
+
+
+def test_company_edit():
+    """This test is for the edit company endpoint"""
+    db = next(get_test_db())
+
+    # Generate good reset password token
+    existing_user = db.query(user_models.User).first()
+    assert existing_user is not None  # Confirm that a user exists
+
+    # Generate access token
+    access_token = security.generate_user_token(
+        token_type="access", sub=f"USER-{existing_user.id}", expire_in=3
+    )
+
+    bad_response = client.put(
+        "users/company",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json={},
+    )
+
+    good_response = client.put(
+        "users/company",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json={"name": faker.name()},
+    )
+
+    # Check good response
+    assert good_response.status_code == 200
+    assert bad_response.status_code == 400

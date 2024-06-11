@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from fastapi import HTTPException, status
+from pydantic import EmailStr
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.common.security import hash_password, verify_password
@@ -149,6 +151,173 @@ async def edit_user(user_id: int, data: edit_schemas.UserEdit, db: Session):
         models.User: The edited user obj
     """
     obj = await selectors.get_user_by_id(user_id=user_id, db=db)
+    data = data.model_dump(exclude_unset=True)
+    if data == {}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No data to update",
+        )
+    for field, value in data.items():
+        setattr(obj, field, value)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+
+async def create_newsletter_subscriber(email: EmailStr, db: Session):
+    """This function creates a newsletter subscription
+
+    Args:
+        email (str): The subscriber's email
+        db (Session): The database session
+
+    Returns:
+        models.Newsletter: The created newsletter subscription obj
+    """
+    if db.query(models.NewsLetter).filter_by(email=email).first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"email {email} already subscribed",
+        )
+    obj = models.NewsLetter(email=email)
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+
+async def create_company(user_id: int, data: create_schemas.CompanyCreate, db: Session):
+    """This function creates a new company
+
+    Args:
+        data (create_schemas.CompanyCreate): The company's data
+        db (Session): The database session
+
+    Raises:
+        HTTPException[400]: Company with email exists
+
+    Returns:
+        models.Company: The created company obj
+    """
+
+    # Fetch the company that matches any of the provided fields
+    company = (
+        db.query(models.Company)
+        .filter(
+            or_(
+                models.Company.email == data.email,
+                models.Company.tax_identification_number
+                == data.tax_identification_number,
+                models.Company.registration_number == data.registration_number,
+                models.Company.phone == data.phone,
+            )
+        )
+        .first()
+    )
+
+    if company:
+        # Determine which fields conflict
+        conflicting_fields = [
+            field
+            for field, value in [
+                ("email", company.email == data.email),
+                (
+                    "tax identification number",
+                    company.tax_identification_number == data.tax_identification_number,
+                ),
+                (
+                    "registration number",
+                    company.registration_number == data.registration_number,
+                ),
+                ("phone", company.phone == data.phone),
+            ]
+            if value
+        ]
+
+        # Generate an appropriate message based on the number of conflicting fields
+        if conflicting_fields:
+            if len(conflicting_fields) == 1:
+                message = f"The {conflicting_fields[0]} is already in use."
+            else:
+                fields_str = (
+                    ", ".join(conflicting_fields[:-1])
+                    + " and "
+                    + conflicting_fields[-1]
+                )
+                message = f"The following fields are already in use: {fields_str}."
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=message,
+            )
+
+    obj = models.Company(**data.model_dump())
+    obj.user_id = user_id
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+
+async def edit_company(user_id: int, data: edit_schemas.CompanyEdit, db: Session):
+    """This function edits a company's details
+
+    Args:
+        user_id (int): The user's ID
+        data (edit_schemas.CompanyEdit): The company's data
+        db (Session): The database session
+
+    Returns:
+        models.Company: The edited company obj
+    """
+    company = (
+        db.query(models.Company)
+        .filter(
+            or_(
+                models.Company.email == data.email,
+                models.Company.tax_identification_number
+                == data.tax_identification_number,
+                models.Company.registration_number == data.registration_number,
+                models.Company.phone == data.phone,
+            )
+        )
+        .first()
+    )
+
+    if company:
+        # Determine which fields conflict
+        conflicting_fields = [
+            field
+            for field, value in [
+                ("email", company.email == data.email),
+                (
+                    "tax identification number",
+                    company.tax_identification_number == data.tax_identification_number,
+                ),
+                (
+                    "registration number",
+                    company.registration_number == data.registration_number,
+                ),
+                ("phone", company.phone == data.phone),
+            ]
+            if value
+        ]
+
+        # Generate an appropriate message based on the number of conflicting fields
+        if conflicting_fields:
+            if len(conflicting_fields) == 1:
+                message = f"The {conflicting_fields[0]} is already in use."
+            else:
+                fields_str = (
+                    ", ".join(conflicting_fields[:-1])
+                    + " and "
+                    + conflicting_fields[-1]
+                )
+                message = f"The following fields are already in use: {fields_str}."
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=message,
+            )
+    obj = db.query(models.Company).filter_by(user_id=user_id).first()
     data = data.model_dump(exclude_unset=True)
     if data == {}:
         raise HTTPException(
