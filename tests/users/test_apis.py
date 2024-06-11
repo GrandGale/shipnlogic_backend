@@ -470,3 +470,31 @@ def test_company_edit():
     # Check good response
     assert good_response.status_code == 200
     assert bad_response.status_code == 400
+
+
+def test_support_request():
+    """This test is for the support request endpoint"""
+    db = next(get_test_db())
+
+    # Generate good reset password token
+    existing_user = db.query(user_models.User).first()
+    assert existing_user is not None  # Confirm that a user exists
+
+    # Generate access token
+    access_token = security.generate_user_token(
+        token_type="access", sub=f"USER-{existing_user.id}", expire_in=3
+    )
+
+    good_response = client.post(
+        "users/support",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json={
+            "full_name": faker.name(),
+            "email": faker.email(),
+            "category": "Shipping",
+            "description": "I have a problem with my shipment",
+        },
+    )
+
+    # Check good response
+    assert good_response.status_code == 200
