@@ -22,9 +22,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "user_password_reset_tokens",
-        sa.Column(
-            "id", sa.Integer, primary_key=True, autoincrement=True, nullable=False
-        ),
+        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column(
             "user_id",
             sa.Integer,

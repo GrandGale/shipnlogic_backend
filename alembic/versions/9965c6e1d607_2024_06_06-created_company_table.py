@@ -23,12 +23,17 @@ def upgrade() -> None:
     op.create_table(
         "companies",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
-        sa.Column("name", sa.String, nullable=False),
+        sa.Column("name", sa.String(length=50), nullable=False),
         sa.Column("registration_number", sa.String, unique=True, nullable=False),
         sa.Column("email", sa.String, unique=True, nullable=False),
         sa.Column("phone", sa.String, unique=True, nullable=False),
         sa.Column("address", sa.String, nullable=False),
-        sa.Column("tax_identification_number", sa.String, unique=True, nullable=False),
+        sa.Column(
+            "tax_identification_number",
+            sa.String(length=9),
+            unique=True,
+            nullable=False,
+        ),
         sa.Column(
             "license_image_url",
             sa.String,
@@ -41,7 +46,7 @@ def upgrade() -> None:
             server_default="/default_permit.jpg",
             nullable=False,
         ),
-        sa.Column("is_verified", sa.Boolean, default=False),
+        sa.Column("is_verified", sa.Boolean, default=False, nullable=False),
         sa.Column(
             "user_id",
             sa.Integer,
