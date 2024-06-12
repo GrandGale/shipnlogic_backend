@@ -329,3 +329,25 @@ async def edit_company(user_id: int, data: edit_schemas.CompanyEdit, db: Session
     db.commit()
     db.refresh(obj)
     return obj
+
+
+async def create_support_request(
+    user_id: int, data: create_schemas.SupportCreate, db: Session
+):
+    """This function creates a new support request
+
+    Args:
+        user_id (int): The user's ID
+        data (create_schemas.SupportCreate): The support request's data
+        db (Session): The database session
+
+
+    Returns:
+        models.SupportRequest: The created support request obj
+    """
+    obj = models.Support(**data.model_dump())
+    obj.user_id = user_id
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    return obj

@@ -76,8 +76,8 @@ class UserPasswordResetToken(DBBase):
 
 
 class NewsLetter(DBBase):
-    """ Database model for newsletter subscribers"""
-    
+    """Database model for newsletter subscribers"""
+
     __tablename__ = "newsletter"
     id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String, unique=True, nullable=False)
@@ -85,7 +85,8 @@ class NewsLetter(DBBase):
 
 
 class Company(DBBase):
-    """ Database model for company""" 
+    """Database model for company"""
+
     __tablename__ = "companies"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
@@ -97,5 +98,24 @@ class Company(DBBase):
     license_image_url = Column(String, default="/default_license.jpg", nullable=False)
     permit_image_url = Column(String, default="/default_permit.jpg", nullable=False)
     is_verified = Column(Boolean, default=False)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at = Column(DateTime(timezone=True), default=datetime.now, nullable=False)
+
+
+class Support(DBBase):
+    """Database model for support"""
+
+    __tablename__ = "support"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    full_name = Column(String(50), nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    category = Column(String, nullable=False)
+    upload_file_url = Column(String, default="/upload_file.png", nullable=False)
+    description = Column(String, nullable=False)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    is_resolved = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=datetime.now, nullable=False)

@@ -59,3 +59,29 @@ class CompanyCreate(BaseModel):
         min_length=1,
         examples=["12345678"],
     )
+
+
+class SupportCreate(BaseModel):
+    """The Support creation model"""
+
+    full_name: str = Field(
+        description="The support's full name",
+        min_length=1,
+        max_length=255,
+        examples=["Alice"],
+    )
+    email: EmailStr = Field(
+        description="The support's email",
+        min_length=1,
+        examples=["user@shipnlogic.com"],
+    )
+    category: str = Field(
+        description="The support's category",
+        min_length=1,
+        examples=["Shipping"],
+    )
+    description: str = Field(
+        description="The support's description",
+        min_length=1,
+        examples=["I have a problem with my shipment"],
+    )

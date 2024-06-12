@@ -363,3 +363,18 @@ async def company_edit(
     """This endpoint is used to edit the user's details"""
     company = await services.edit_company(user_id=user.id, data=data, db=db)
     return {"data": company}
+
+
+@router.post(
+    "/support",
+    summary="Send Support Request",
+    response_description="Support Request Sent",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseSchema,
+)
+async def support_request(
+    current_user: CurrentUser, data: create_schemas.SupportCreate, db: DatabaseSession
+):
+    """This endpoint sends a support request"""
+    await services.create_support_request(user_id=current_user.id, data=data, db=db)
+    return {"data": {"message": "Support request has been sent"}}
