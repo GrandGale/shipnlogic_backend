@@ -149,6 +149,11 @@ async def edit_admin(admin_id: int, data: edit_schemas.AdminEdit, db: Session):
         models.Admin: The edited admin obj
     """
     obj = await selectors.get_admin_by_id(admin_id=admin_id, db=db)
+    if obj.permission != "SUPER_ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot edit an admin",
+        )
     data = data.model_dump(exclude_unset=True)
     if data == {}:
         raise HTTPException(
