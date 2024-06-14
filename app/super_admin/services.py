@@ -118,6 +118,25 @@ async def login_admin(
     return None
 
 
+async def create_admin_refresh_token(admin_id: int, token: str, db: Session):
+    """This function creates an admin refresh token
+
+    Args:
+        admin_id (int): The admin's ID
+        token(str): The access token
+        db (Session): The database session
+
+    Returns:
+        models.AdminRefreshToken: The created admin refresh token obj
+    """
+    await selectors.get_admin_by_id(admin_id=admin_id, db=db)
+    obj = models.AdminRefreshToken(admin_id=admin_id, token=token)
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+
 async def edit_admin(admin_id: int, data: edit_schemas.AdminEdit, db: Session):
     """This function edits an admin's details
 

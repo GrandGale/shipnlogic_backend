@@ -35,7 +35,7 @@ def upgrade() -> None:
         sa.Column("password", sa.String, nullable=False),
         sa.Column("is_active", sa.Boolean, default=True),
         sa.Column(
-            "added_by", sa.Integer, sa.ForeignKey("admins.id", ondelete="CASCADE")
+            "added_by", sa.Integer, sa.ForeignKey("admins.id", ondelete="CASCADE"), nullable=True
         ),
         sa.Column(
             "gender",

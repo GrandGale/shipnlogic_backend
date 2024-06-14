@@ -1,13 +1,19 @@
-from fastapi import APIRouter, HTTPException, status
+from datetime import datetime
+
+from fastapi import APIRouter, Body, HTTPException, status
 
 from app.common.annotations import DatabaseSession
+from app.common.schemas import ResponseSchema
 from app.config.settings import get_settings
-from app.super_admin import services
+from app.super_admin import selectors, services, models
 from app.super_admin.annotations import CurrentAdmin
-from app.super_admin.schemas import (base_schemas, create_schemas,
-                                     edit_schemas, response_schemas)
+from app.super_admin.schemas import (
+    base_schemas,
+    create_schemas,
+    edit_schemas,
+    response_schemas,
+)
 from app.user import security
-from app.user import services as user_services
 
 settings = get_settings()
 
@@ -65,8 +71,8 @@ async def admin_login(
         sub=f"ADMIN-{admin.id}",
         expire_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
     )
-    await user_services.create_user_refresh_token(
-        user_id=admin.id, token=refresh_token, db=db
+    await services.create_admin_refresh_token(
+        admin_id=admin.id, token=refresh_token, db=db
     )
     return {
         "data": {
@@ -91,3 +97,49 @@ async def admin_edit(
     """This endpoint is used to edit the admin's details"""
     admin = await services.edit_admin(admin_id=admin.id, data=admin_in, db=db)
     return {"data": admin}
+
+
+@router.post(
+    "/token",
+    summary="Generate Admin Access Token",
+    response_description="The admin's access token",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseSchema,
+)
+async def user_refresh_token(
+    db: DatabaseSession,
+    refresh_token: str = Body(
+        description="The Admin's refresh token", min_length=1, embed=True
+    ),
+):
+    """This endpoint generates a new access token for the admin using the refresh token"""
+    admin_id = security.verify_user_refresh_token(token=refresh_token)
+    await selectors.get_admin_refresh_token(
+        admin_id=admin_id, token=refresh_token, db=db
+    )
+    admin = await selectors.get_admin_by_id(admin_id=admin_id, db=db)
+    admin.last_login = datetime.now()
+    db.commit()
+    return {
+        "data": {
+            "access_token": security.generate_user_token(
+                token_type="access",
+                sub=f"ADMIN-{admin_id}",
+                expire_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+            )
+        }
+    }
+
+
+@router.delete(
+    "/logout",
+    summary="Logout Admin",
+    response_description="Admin has been logged out",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseSchema,
+)
+async def admin_logout(admin_user: CurrentAdmin, db: DatabaseSession):
+    """This endpoint logs out the current admin by deleting all their refresh tokens"""
+    db.query(models.AdminRefreshToken).filter_by(admin_id=admin_user.id).delete()
+    db.commit()
+    return {"data": {"message": "Admin has been logged out"}}

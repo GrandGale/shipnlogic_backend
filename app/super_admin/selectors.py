@@ -53,3 +53,27 @@ async def get_admin_by_email(email: str, db: Session, raise_exception: bool = Tr
             detail="Admin not found",
         )
     return None
+
+
+async def get_admin_refresh_token(admin_id: int, token: str, db: Session):
+    """This function returns an admin's refresh token
+
+    Args:
+        admin_id (int): The admin's ID
+        token (str): The admin's refresh token
+        db (Session): The database session
+
+    Returns:
+        (models.AdminRefreshToken): The admin refresh token obj
+    """
+    obj = (
+        db.query(models.AdminRefreshToken)
+        .filter_by(admin_id=admin_id, token=token)
+        .first()
+    )
+    if not obj:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Token",
+        )
+    return obj

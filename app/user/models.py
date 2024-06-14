@@ -59,6 +59,7 @@ class UserRefreshToken(DBBase):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     token = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.now, nullable=False)
 
 
 class UserPasswordResetToken(DBBase):

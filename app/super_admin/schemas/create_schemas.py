@@ -35,8 +35,3 @@ class AdminCreate(BaseModel):
         min_length=1,
         examples=["admin"],
     )
-    added_by: str = Field(
-        description="The admin that added this admin",
-        min_length=1,
-        examples=["admin"],
-    )

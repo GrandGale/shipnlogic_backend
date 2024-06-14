@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Enum, ForeignKey
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
 
 from app.config.database import DBBase
 
@@ -17,7 +17,7 @@ class Admin(DBBase):
     phone_number = Column(String(20), nullable=False)
     password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
-    added_by = Column(Integer, ForeignKey("admins.id"), nullable=False)
+    added_by = Column(Integer, ForeignKey("admins.id"), nullable=True)
     gender = Column(Enum("MALE", "FEMALE", "OTHER", name="gender_enum"), nullable=False)
     permission = Column(Enum("SUPER_ADMIN", "ADMIN", name="admin_enum"), nullable=False)
     last_login = Column(DateTime(timezone=True), nullable=True)
@@ -48,4 +48,17 @@ class AdminNotification(DBBase):
     )
     content = Column(String, nullable=False)
     is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.now, nullable=False)
+
+
+class AdminRefreshToken(DBBase):
+    """Database model for admin refresh tokens"""
+
+    __tablename__ = "admin_refresh_tokens"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    admin_id = Column(
+        Integer, ForeignKey("admins.id", ondelete="CASCADE"), nullable=False
+    )
+    token = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), default=datetime.now, nullable=False)
