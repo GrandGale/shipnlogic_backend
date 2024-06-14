@@ -22,7 +22,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "admins",
-        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column(
             "profile_picture_url",
             sa.String,
@@ -30,11 +30,13 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("full_name", sa.String(255), nullable=False),
-        sa.Column("email", sa.String, unique=True, index=True, nullable=False),
+        sa.Column("email", sa.String, unique=True, nullable=False),
         sa.Column("phone_number", sa.String(20), nullable=False),
         sa.Column("password", sa.String, nullable=False),
         sa.Column("is_active", sa.Boolean, default=True),
-        sa.Column("added_by", sa.String(50), nullable=False),
+        sa.Column(
+            "added_by", sa.Integer, sa.ForeignKey("admins.id", ondelete="CASCADE")
+        ),
         sa.Column(
             "gender",
             sa.Enum("MALE", "FEMALE", "OTHER", name="gender_enum"),
@@ -57,3 +59,5 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("admins")
+    sa.Enum(name="gender_enum").drop(op.get_bind(), checkfirst=True)
+    sa.Enum(name="admin_enum").drop(op.get_bind(), checkfirst=True)

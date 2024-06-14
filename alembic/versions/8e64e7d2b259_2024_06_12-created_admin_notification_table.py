@@ -29,7 +29,7 @@ def upgrade() -> None:
             sa.ForeignKey("admins.id", ondelete="CASCADE"),
             nullable=False,
         ),
-        sa.Column("content", sa.String, nullable=False),
+        sa.Column("content", sa.String(255), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),

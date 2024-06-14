@@ -29,3 +29,27 @@ async def get_admin_by_id(admin_id: int, db: Session, raise_exception: bool = Tr
             detail="Admin not found",
         )
     return None
+
+
+async def get_admin_by_email(email: str, db: Session, raise_exception: bool = True):
+    """This function returns an admin obj based on the admin's email
+
+    Args:
+        email (str): The admin's email
+        db (Session): The database session
+        raise_exception (bool, default=True): Raise a HTTPException[404] when admin isn't found
+
+    Raises:
+        HTTPException[404]: Admin not found
+
+    Returns:
+        (models.Admin, None): The admin obj or None
+    """
+    if obj := db.query(models.Admin).filter_by(email=email).first():
+        return obj
+    if raise_exception:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin not found",
+        )
+    return None
