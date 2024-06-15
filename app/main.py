@@ -15,6 +15,7 @@ from app.config.handlers import (
 )
 from app.common.dependencies import get_db
 from app.user.apis import router as user_router
+from app.super_admin.apis import router as super_admin_router
 
 
 # Lifespan (startup, shutdown)
@@ -75,3 +76,4 @@ async def health_check(_=Depends(get_db)):
 
 # Routers
 app.include_router(user_router, prefix="/users", tags=["User APIs"])
+app.include_router(super_admin_router, prefix="/super-admin", tags=["Super Admin APIs"])
