@@ -5,7 +5,7 @@ from fastapi import APIRouter, Body, HTTPException, status
 from app.common.annotations import DatabaseSession
 from app.common.schemas import ResponseSchema
 from app.config.settings import get_settings
-from app.super_admin import selectors, services, models
+from app.super_admin import models, selectors, services
 from app.super_admin.annotations import CurrentAdmin
 from app.super_admin.schemas import (
     base_schemas,
@@ -143,3 +143,57 @@ async def admin_logout(admin_user: CurrentAdmin, db: DatabaseSession):
     db.query(models.AdminRefreshToken).filter_by(admin_id=admin_user.id).delete()
     db.commit()
     return {"data": {"message": "Admin has been logged out"}}
+
+
+@router.get(
+    "/me",
+    summary="Get admin details",
+    response_description="The admin's details",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.AdminResponse,
+)
+async def admin_me(admin: CurrentAdmin):
+    """The endpoint returns the details of the current logged in admin"""
+    return {"data": admin}
+
+
+@router.get(
+    "/configurations",
+    summary="Get Admin Configuration",
+    response_description="The admin's configuration",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.AdminConfigurationResponse,
+)
+async def admin_configurations(current_admin: CurrentAdmin, db: DatabaseSession):
+    """This endpoint returns the admin's configurations"""
+
+    return {
+        "data": await selectors.get_admin_configuration_by_admin_id(
+            admin_id=current_admin.id, db=db
+        )
+    }
+
+
+@router.put(
+    "/configurations",
+    summary="Edit Admin Configurations",
+    response_description="The admin's configuration (new)",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.AdminConfigurationResponse,
+)
+async def admin_configurations_edit(
+    configuration_in: edit_schemas.AdminConfigurationEdit,
+    current_admin: CurrentAdmin,
+    db: DatabaseSession,
+):
+    """This endpoint returns the admin's configurations"""
+    configurations = await selectors.get_admin_configuration_by_admin_id(
+        admin_id=current_admin.id, db=db
+    )
+
+    # Update configurations
+    for field, value in configuration_in.model_dump().items():
+        setattr(configurations, field, value)
+    db.commit()
+
+    return {"data": configurations}

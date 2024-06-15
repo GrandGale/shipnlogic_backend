@@ -25,3 +25,10 @@ class AdminEdit(BaseModel):
         pattern=r"SUPER_ADMIN|ADMIN",
         examples=["SUPER_ADMIN", "ADMIN"],
     )
+
+
+class AdminConfigurationEdit(BaseModel):
+    """The edit schema for admin configurations"""
+
+    notification_email: bool = Field(description="The admin email notification status")
+    notification_inapp: bool = Field(description="The admin in-app notification status")

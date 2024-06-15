@@ -31,3 +31,11 @@ class AdminLoginCredential(BaseModel):
         description="Expire refresh token in 24hrs if true else expire in 72hrs",
         default=False,
     )
+
+
+class AdminConfiguration(BaseModel):
+    """The base admin configuration model"""
+
+    id: int = Field(desffcription="The admin configuration ID")
+    notification_email: bool = Field(description="The admin email notification status")
+    notification_inapp: bool = Field(description="The admin in-app notification status")

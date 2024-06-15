@@ -1,8 +1,10 @@
-from fastapi import HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.common.dependencies import get_db
 from app.config.settings import get_settings
 from app.super_admin import models
+from app.user import security
 
 settings = get_settings()
 
@@ -75,5 +77,49 @@ async def get_admin_refresh_token(admin_id: int, token: str, db: Session):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid Token",
+        )
+    return obj
+
+
+async def get_current_admin(
+    token: str = Header(alias="Authorization"), db: Session = Depends(get_db)
+):
+    """This function returns the current admin based on the token provided"""
+    try:
+        token_type, token = token.split(" ")
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+    if token_type != "Bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+    admin_id = int(security.verify_user_access_token(token=token))
+    if admin := await get_admin_by_id(admin_id=admin_id, db=db, raise_exception=False):
+        return admin
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid token type",
+    )
+
+
+async def get_admin_configuration_by_admin_id(admin_id: int, db: Session):
+    """This function returns the admin configuration based on the admin's ID
+
+    Args:
+        admin_id (int): The admin's ID
+        db (Session): The database session
+
+    Returns:
+        (models.AdminConfiguration): The Admin configuration obj
+    """
+    obj = db.query(models.AdminConfiguration).filter_by(admin_id=admin_id).first()
+    if not obj:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"User Configuration for user {admin_id} not found",
         )
     return obj
