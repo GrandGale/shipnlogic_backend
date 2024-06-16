@@ -120,6 +120,6 @@ async def get_admin_configuration_by_admin_id(admin_id: int, db: Session):
     if not obj:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"User Configuration for user {admin_id} not found",
+            detail=f"Admin Configuration for admin {admin_id} not found",
         )
     return obj

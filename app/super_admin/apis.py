@@ -1,8 +1,9 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Body, HTTPException, status
-
-from app.common.annotations import DatabaseSession
+from app.common.security import verify_password, hash_password
+from app.common.annotations import DatabaseSession, PaginationParams
+from app.common.paginators import get_pagination_metadata, paginate
 from app.common.schemas import ResponseSchema
 from app.config.settings import get_settings
 from app.super_admin import models, selectors, services
@@ -197,3 +198,112 @@ async def admin_configurations_edit(
     db.commit()
 
     return {"data": configurations}
+
+
+@router.get(
+    "/notifications",
+    summary="Get Admin Notification List",
+    response_description="The list of the admin's notifications",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.AdminNotificationListResponse,
+)
+async def admin_notifications(
+    pagination: PaginationParams,
+    current_admin: CurrentAdmin,
+    db: DatabaseSession,
+):
+    """This endpoint returns a paginated list of the current logged in admin's notifications"""
+    notifications_qs = db.query(models.AdminNotification).filter_by(
+        admin_id=current_admin.id
+    )
+    paginated_notifications: list[models.AdminNotification] = paginate(
+        qs=notifications_qs, page=pagination.page, size=pagination.size
+    )
+    return {
+        "data": {
+            "notifications": [
+                {
+                    "id": noti.id,
+                    "content": noti.content,
+                    "created_at": noti.created_at,
+                    "is_read": noti.is_read,
+                }
+                for noti in paginated_notifications
+            ],
+            "unread": any(not noti.is_read for noti in paginated_notifications),
+            "meta": get_pagination_metadata(
+                qs=notifications_qs,
+                count=len(paginated_notifications),
+                page=pagination.page,
+                size=pagination.size,
+            ),
+        }
+    }
+
+
+@router.put(
+    "/notifications/read",
+    summary="Mark Admin Notifications as Read",
+    response_description="Notifications have been marked as read",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseSchema,
+)
+async def admin_notification_read(current_admin: CurrentAdmin, db: DatabaseSession):
+    """This endpoint marks all the admin's notifications as read"""
+
+    db.query(models.AdminNotification).filter_by(
+        admin_id=current_admin.id, is_read=False
+    ).update({"is_read": True}, synchronize_session=False)
+    db.commit()
+    return {"data": {"message": "Notifications have been marked as read"}}
+
+
+@router.post(
+    "/password/confirm",
+    summary="Confirm Admin's Password",
+    response_description="Password Confirmed",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseSchema,
+)
+async def admin_password_confirm(
+    current_admin: CurrentAdmin,
+    password: str = Body(description="The admin's password", min_length=1, embed=True),
+):
+    """This endpoints confirms the admin's password"""
+
+    if verify_password(plain_password=password, hashed_password=current_admin.password):
+        return {"data": {"is_correct": True}}
+    return {"data": {"is_correct": False}}
+
+
+@router.put(
+    "/password/change",
+    summary="Change Admin Password",
+    response_description="The Admin's Details",
+    status_code=status.HTTP_200_OK,
+    response_model=response_schemas.AdminResponse,
+)
+async def admin_password_change(
+    password_change: edit_schemas.AdminPasswordChange,
+    current_admin: CurrentAdmin,
+    db: DatabaseSession,
+):
+    """This endpoint changes the admin's password"""
+
+    if verify_password(
+        plain_password=password_change.old_password,
+        hashed_password=current_admin.password,
+    ):
+        current_admin.password = hash_password(raw=password_change.new_password)
+        db.commit()
+
+        # Notifications
+        await services.create_admin_notification(
+            admin_id=current_admin.id,
+            content="You have successfully changed your password",
+            db=db,
+        )
+        return {"data": current_admin}
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST, detail="incorrect Password"
+    )

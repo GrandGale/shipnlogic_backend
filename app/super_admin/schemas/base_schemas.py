@@ -1,4 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr
+from datetime import datetime
+from app.common.schemas import PaginationSchema
 from app.common.schemas import Token
 
 
@@ -36,6 +38,25 @@ class AdminLoginCredential(BaseModel):
 class AdminConfiguration(BaseModel):
     """The base admin configuration model"""
 
-    id: int = Field(desffcription="The admin configuration ID")
+    id: int = Field(description="The admin configuration ID")
     notification_email: bool = Field(description="The admin email notification status")
     notification_inapp: bool = Field(description="The admin in-app notification status")
+
+
+class AdminNotification(BaseModel):
+    """The base schema for admiin notifications"""
+
+    id: int = Field(description="The ID of the notification")
+    content: str = Field(description="The notification message")
+    is_read: bool = Field(description="The notification read status")
+    created_at: datetime = Field(description="The notification created date")
+
+
+class PaginatedAdminNotification(BaseModel):
+    """The base schema for paginated admin notifications"""
+
+    notifications: list[AdminNotification] = Field(
+        description="The list of admin notifications"
+    )
+    unread: bool = Field(description="Indicates if there are unread notifications")
+    meta: PaginationSchema = Field(description="The pagination details")

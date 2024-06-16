@@ -32,3 +32,10 @@ class AdminConfigurationEdit(BaseModel):
 
     notification_email: bool = Field(description="The admin email notification status")
     notification_inapp: bool = Field(description="The admin in-app notification status")
+
+
+class AdminPasswordChange(BaseModel):
+    """This schema is used to change the admin's password"""
+
+    old_password: str = Field(description="The admin's old password", min_length=1)
+    new_password: str = Field(description="The admin's new password", min_length=1)
