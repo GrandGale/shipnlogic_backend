@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
-from app.common.schemas import PaginationSchema
-from app.common.schemas import Token
+
+from pydantic import BaseModel, EmailStr, Field
+
+from app.common.schemas import PaginationSchema, Token
 
 
 class Admin(BaseModel):
@@ -13,6 +14,7 @@ class Admin(BaseModel):
     email: str = Field(description="The admin's email")
     phone_number: str = Field(description="The admin's phone number")
     permission: str = Field(description="Whether the admin is a super admin or not")
+    gender: str = Field(description="The admin's gender")
 
 
 class AdminLogin(BaseModel):

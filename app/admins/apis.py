@@ -1,19 +1,20 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Body, HTTPException, status
-from app.common.security import verify_password, hash_password
-from app.common.annotations import DatabaseSession, PaginationParams
-from app.common.paginators import get_pagination_metadata, paginate
-from app.common.schemas import ResponseSchema
-from app.config.settings import get_settings
-from app.super_admin import models, selectors, services
-from app.super_admin.annotations import CurrentAdmin
-from app.super_admin.schemas import (
+
+from app.admins import models, selectors, services
+from app.admins.annotations import CurrentAdmin
+from app.admins.schemas import (
     base_schemas,
     create_schemas,
     edit_schemas,
     response_schemas,
 )
+from app.common.annotations import DatabaseSession, PaginationParams
+from app.common.paginators import get_pagination_metadata, paginate
+from app.common.schemas import ResponseSchema
+from app.common.security import hash_password, verify_password
+from app.config.settings import get_settings
 from app.user import security
 
 settings = get_settings()

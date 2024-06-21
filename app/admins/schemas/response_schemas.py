@@ -1,12 +1,12 @@
 from pydantic import Field
 
-from app.common.schemas import ResponseSchema
-from app.super_admin.schemas.base_schemas import (
+from app.admins.schemas.base_schemas import (
     Admin,
     AdminConfiguration,
     AdminLogin,
     PaginatedAdminNotification,
 )
+from app.common.schemas import ResponseSchema
 
 
 class AdminResponse(ResponseSchema):

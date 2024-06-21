@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.common.dependencies import get_db
 from app.config.settings import get_settings
-from app.super_admin import models
+from app.admins import models
 from app.user import security
 
 settings = get_settings()
