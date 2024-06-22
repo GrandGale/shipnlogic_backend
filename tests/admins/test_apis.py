@@ -119,9 +119,39 @@ def test_admin_login():
     REFRESH_TOKEN += response_data["data"]["tokens"]["refresh_token"]
 
 
+def test_admin_me():
+    """This test is for the admin me endpoint"""
+
+    # Successful request with valid token
+    good_response = client.get("/admins/me", headers={"Authorization": ACCESS_TOKEN})
+
+    # Unauthorized request (no token provided)
+    bad_response = client.get("/admins/me", headers={"Authorization": "ACCESS_TOKEN"})
+
+    # Check successful response
+    assert good_response.status_code == 200
+    good_response_data = good_response.json()
+    assert good_response_data["status"] == "success"
+    assert "data" in good_response_data
+
+    admin_data = good_response_data["data"]
+
+    assert admin_data["id"] is not None
+    assert admin_data["profile_picture_url"] == "/default_profile.jpg"
+    assert admin_data["full_name"] == ADMIN["full_name"]
+    assert admin_data["email"] == ADMIN["email"]
+    assert admin_data["phone_number"] == ADMIN["phone_number"]
+    assert admin_data["permission"] == ADMIN["permission"]
+    # Check unauthorized access response
+    assert bad_response.status_code == 401
+    bad_response_data = bad_response.json()
+    assert bad_response_data["status"] == "error"
+    assert "data" in bad_response_data
+    assert bad_response_data["data"]["message"] == "Invalid token"
+
+
 def test_admin_edit():
     """This test is for the admin edit endpoint"""
-
     new_admin = ADMIN.copy()
     new_admin["full_name"] = faker.name()
     new_admin["permission"] = "ADMIN"
@@ -216,3 +246,79 @@ def test_admin_logout():
     invalid_response_data = invalid_response.json()
     assert invalid_response_data["status"] == "error"
     assert invalid_response_data["data"]["message"] == "Invalid token"
+
+
+def test_admin_configurations():
+    """This test is for the admin configurations endpoint"""
+
+    # Successful request with valid token
+    good_response = client.get(
+        "/admins/configurations", headers={"Authorization": ACCESS_TOKEN}
+    )
+
+    # Unauthorized request (invalid token provided)
+    bad_response = client.get(
+        "/admins/configurations", headers={"Authorization": "Bearer INVALID_TOKEN"}
+    )
+
+    # Check successful response
+    assert good_response.status_code == 200
+    good_response_data = good_response.json()
+    assert good_response_data["status"] == "success"
+    assert "data" in good_response_data
+
+    config_data = good_response_data["data"]
+
+    assert config_data["id"] is not None
+    assert isinstance(config_data["notification_email"], bool)
+    assert isinstance(config_data["notification_inapp"], bool)
+
+    # Check unauthorized access response
+    assert bad_response.status_code == 401
+    bad_response_data = bad_response.json()
+    assert bad_response_data["status"] == "error"
+    assert "data" in bad_response_data
+    assert bad_response_data["data"]["message"] == "Invalid Token"
+
+
+def test_admin_configurations_edit():
+    """This test is for the admin configurations edit endpoint"""
+
+    # New configurations data
+    new_configurations = {
+        "notification_email": False,
+        "notification_inapp": True,
+    }
+
+    # Successful request with valid token
+    good_response = client.put(
+        "/admins/configurations",
+        headers={"Authorization": ACCESS_TOKEN},
+        json=new_configurations,
+    )
+
+    # Unauthorized request (invalid token provided)
+    bad_response = client.put(
+        "/admins/configurations",
+        headers={"Authorization": faker.sha256()},
+        json=new_configurations,
+    )
+
+    # Check successful response
+    assert good_response.status_code == 200
+    good_response_data = good_response.json()
+    assert good_response_data["status"] == "success"
+    assert "data" in good_response_data
+
+    config_data = good_response_data["data"]
+
+    assert config_data["id"] is not None
+    assert config_data["notification_email"] == new_configurations["notification_email"]
+    assert config_data["notification_inapp"] == new_configurations["notification_inapp"]
+
+    # Check unauthorized access response
+    assert bad_response.status_code == 401
+    bad_response_data = bad_response.json()
+    assert bad_response_data["status"] == "error"
+    assert "data" in bad_response_data
+    assert bad_response_data["data"]["message"] == "Invalid token"

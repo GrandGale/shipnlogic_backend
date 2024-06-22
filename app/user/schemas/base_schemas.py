@@ -15,6 +15,7 @@ class User(BaseModel):
     exception_alert_email: str = Field(description="The user's exception alert email")
     is_active: bool = Field(description="Whether the user is active")
     is_verified: bool = Field(description="Whether the user is verified")
+    permission: str = Field(description="The user's permission", default="USER")
 
 
 class UserLogin(BaseModel):
