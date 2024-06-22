@@ -4,8 +4,8 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.common.security import hash_password, verify_password
-from app.super_admin import models, selectors
-from app.super_admin.schemas import base_schemas, create_schemas, edit_schemas
+from app.admins import models, selectors
+from app.admins.schemas import base_schemas, create_schemas, edit_schemas
 
 
 async def create_admin(data: create_schemas.AdminCreate, db: Session):
@@ -149,10 +149,9 @@ async def edit_admin(admin_id: int, data: edit_schemas.AdminEdit, db: Session):
         models.Admin: The edited admin obj
     """
     obj = await selectors.get_admin_by_id(admin_id=admin_id, db=db)
-    if obj.permission != "SUPER_ADMIN":
+    if data.permission == "SUPER_ADMIN" and obj.permission != "SUPER_ADMIN":
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You cannot edit an admin",
+            status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot edit an admin"
         )
     data = data.model_dump(exclude_unset=True)
     if data == {}:

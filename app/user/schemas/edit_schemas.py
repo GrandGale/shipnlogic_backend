@@ -11,7 +11,7 @@ class UserEdit(BaseModel):
         examples=["https://example.com/image.jpg"],
     )
     full_name: str | None = Field(
-        description="The user's ull name", min_length=1, default=None
+        description="The user's full name", min_length=1, default=None
     )
 
 
