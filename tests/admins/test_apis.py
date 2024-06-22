@@ -322,3 +322,217 @@ def test_admin_configurations_edit():
     assert bad_response_data["status"] == "error"
     assert "data" in bad_response_data
     assert bad_response_data["data"]["message"] == "Invalid token"
+
+
+def test_admin_notifications():
+    """This test is for the admin notifications endpoint"""
+
+    # Define pagination parameters
+    pagination_params = {"page": 1, "size": 10}
+
+    # Successful request with valid token
+    good_response = client.get(
+        "/admins/notifications",
+        headers={"Authorization": ACCESS_TOKEN},
+        params=pagination_params,
+    )
+
+    # Unauthorized request (invalid token provided)
+    bad_response = client.get(
+        "/admins/notifications",
+        headers={"Authorization": faker.sha256()},
+        params=pagination_params,
+    )
+
+    # Check successful response
+    assert good_response.status_code == 200
+    good_response_data = good_response.json()
+    assert good_response_data["status"] == "success"
+    assert "data" in good_response_data
+
+    data = good_response_data["data"]
+
+    assert "notifications" in data
+    assert isinstance(data["notifications"], list)
+
+    # Check the first notification in the list if it exists
+    if data["notifications"]:
+        notification = data["notifications"][0]
+        assert notification["id"] is not None
+        assert notification["content"] is not None
+        assert notification["is_read"] is not None
+        assert notification["created_at"] is not None
+
+    assert "unread" in data
+    assert isinstance(data["unread"], bool)
+
+    assert "meta" in data
+    meta = data["meta"]
+    assert "total_no_items" in meta
+    assert "total_no_pages" in meta
+    assert "page" in meta
+    assert "size" in meta
+    assert "count" in meta
+    assert "has_next_page" in meta
+    assert "has_prev_page" in meta
+
+    # Check unauthorized access response
+    assert bad_response.status_code == 401
+    bad_response_data = bad_response.json()
+    assert bad_response_data["status"] == "error"
+    assert "data" in bad_response_data
+    assert bad_response_data["data"]["message"] == "Invalid token"
+
+
+def test_admin_notification_read():
+    """This test is for the admin notification read endpoint"""
+
+    # Successful request with valid token
+    good_response = client.put(
+        "/admins/notifications/read", headers={"Authorization": ACCESS_TOKEN}
+    )
+
+    # Unauthorized request (invalid token provided)
+    bad_response = client.put(
+        "/admins/notifications/read", headers={"Authorization": faker.sha256()}
+    )
+
+    # Check successful response
+    assert good_response.status_code == 200
+    good_response_data = good_response.json()
+    assert good_response_data["status"] == "success"
+    assert "data" in good_response_data
+    assert (
+        good_response_data["data"]["message"]
+        == "Notifications have been marked as read"
+    )
+
+    # Check unauthorized access response
+    assert bad_response.status_code == 401
+    bad_response_data = bad_response.json()
+    assert bad_response_data["status"] == "error"
+    assert "data" in bad_response_data
+    assert bad_response_data["data"]["message"] == "Invalid token"
+
+
+def test_admin_password_confirm():
+    """This test is for the admin password confirm endpoint"""
+
+    # Valid password confirmation
+    valid_password_payload = {"password": ADMIN["password"]}
+    valid_response = client.post(
+        "/admins/password/confirm",
+        headers={"Authorization": ACCESS_TOKEN},
+        json=valid_password_payload,
+    )
+
+    # Invalid password confirmation
+    invalid_password_payload = {"password": faker.password()}
+    invalid_response = client.post(
+        "/admins/password/confirm",
+        headers={"Authorization": ACCESS_TOKEN},
+        json=invalid_password_payload,
+    )
+
+    # Unauthorized request (invalid token provided)
+    bad_response = client.post(
+        "/admins/password/confirm",
+        headers={"Authorization": faker.sha256()},
+        json=valid_password_payload,
+    )
+
+    # Check valid password response
+    assert valid_response.status_code == 200
+    valid_response_data = valid_response.json()
+    assert valid_response_data["status"] == "success"
+    assert "data" in valid_response_data
+    assert valid_response_data["data"]["is_correct"] is True
+
+    # Check invalid password response
+    assert invalid_response.status_code == 200
+    invalid_response_data = invalid_response.json()
+    assert invalid_response_data["status"] == "success"
+    assert "data" in invalid_response_data
+    assert invalid_response_data["data"]["is_correct"] is False
+
+    # Check unauthorized access response
+    assert bad_response.status_code == 401
+    bad_response_data = bad_response.json()
+    assert bad_response_data["status"] == "error"
+    assert "data" in bad_response_data
+    assert bad_response_data["data"]["message"] == "Invalid token"
+
+
+def test_admin_password_change():
+    """This test is for the admin password change endpoint"""
+
+    old_password = ADMIN["password"]
+    new_password = "new_secure_password123"
+
+    # Valid password change
+    valid_password_change_payload = {
+        "old_password": old_password,
+        "new_password": new_password,
+    }
+    good_response = client.put(
+        "/admins/password/change",
+        headers={"Authorization": ACCESS_TOKEN},
+        json=valid_password_change_payload,
+    )
+
+    # Invalid old password
+    invalid_password_change_payload = {
+        "old_password": faker.password(),
+        "new_password": new_password,
+    }
+    bad_response = client.put(
+        "/admins/password/change",
+        headers={"Authorization": ACCESS_TOKEN},
+        json=invalid_password_change_payload,
+    )
+
+    # Unauthorized request (invalid token provided)
+    bad_admin_response = client.put(
+        "/admins/password/change",
+        headers={"Authorization": faker.sha256()},
+        json=valid_password_change_payload,
+    )
+
+    # Check valid password change response
+    assert good_response.status_code == 200
+    valid_response_data = good_response.json()
+    assert valid_response_data["status"] == "success"
+    assert "data" in valid_response_data
+    assert valid_response_data["data"]["id"] is not None
+    assert valid_response_data["data"]["email"] == ADMIN["email"]
+
+    # Check invalid old password response
+    assert bad_response.status_code == 400
+    invalid_response_data = bad_response.json()
+    assert invalid_response_data["data"]["message"] == "incorrect Password"
+
+    # Check unauthorized access response
+    assert bad_admin_response.status_code == 401
+    bad_admin_response_data = bad_admin_response.json()
+    assert bad_admin_response_data["status"] == "error"
+    assert "data" in bad_admin_response_data
+    assert bad_admin_response_data["data"]["message"] == "Invalid token"
+
+    # Resetting the password back to the original for idempotency
+    reset_password_payload = {
+        "old_password": new_password,
+        "new_password": old_password,
+    }
+    reset_response = client.put(
+        "/admins/password/change",
+        headers={"Authorization": ACCESS_TOKEN},
+        json=reset_password_payload,
+    )
+
+    # Check if the reset was successful
+    assert reset_response.status_code == 200
+    reset_response_data = reset_response.json()
+    assert reset_response_data["status"] == "success"
+    assert "data" in reset_response_data
+    assert reset_response_data["data"]["id"] is not None
+    assert reset_response_data["data"]["email"] == ADMIN["email"]
